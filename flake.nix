@@ -35,6 +35,16 @@
         chmod 644 etc/passwd
         chmod 644 etc/group
       '';
+
+      # Symlinks CA certs into place for HTTPS etc. via curl, java and other
+      # programs to work.
+      symlinkCACerts = { cacert }: ''
+        mkdir -p etc/ssl/certs etc/pki/tls/certs
+        ln -s ${cacert}/etc/ssl/certs/ca-bundle.crt etc/ssl/certs/ca-bundle.crt
+        ln -s ${cacert}/etc/ssl/certs/ca-bundle.crt etc/ssl/certs/ca-certificates.crt
+        ln -s ${cacert}/etc/ssl/certs/ca-bundle.crt etc/pki/tls/certs/ca-bundle.crt
+        ln -s ${cacert.p11kit}/etc/ssl/trust-source etc/ssl/trust-source
+      '';
     };
   };
 }
