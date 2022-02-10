@@ -77,7 +77,7 @@
         env = envvars: nixpkgs.lib.mapAttrsToList (k: v: "${k}=${toString v}") envvars;
 
         # Turns [ "/var/run/zentria" ] into { "/var/lib/zentria" = { }; }
-        volumes = paths: nixpkgs.lib.listToAttrs (map (p: { name = p; value = { }; })) paths;
+        volumes = paths: nixpkgs.lib.listToAttrs (map (p: { name = p; value = { }; }) paths);
       };
     };
   };

@@ -1,3 +1,4 @@
+# nix-build ./examples/build-fhs.nix
 let
   flake = builtins.getFlake (toString ./..);
   pkgs = import flake.inputs.nixpkgs { };
