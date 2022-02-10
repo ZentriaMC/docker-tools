@@ -71,6 +71,14 @@
           fhsPaths = self.lib.setupFHS args;
         in
         toString (nixpkgs.lib.mapAttrsToList (name: env: "ln -s ${env}/${name} ${name};") fhsPaths);
+
+      dockerConfig = {
+        # Turns { TZ = "UTC"; LANG = "C"; } into [ "TZ=UTC", "LANG=C" ]
+        env = envvars: nixpkgs.lib.mapAttrsToList (k: v: "${k}=${toString v}") envvars;
+
+        # Turns [ "/var/run/zentria" ] into { "/var/lib/zentria" = { }; }
+        volumes = paths: nixpkgs.lib.listToAttrs (map (p: { name = p; value = { }; })) paths;
+      };
     };
   };
 }
