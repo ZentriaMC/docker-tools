@@ -7,6 +7,7 @@
 
   outputs = { self, nixpkgs }: {
     lib = {
+      dockerConfig = import ./docker-config.nix { inherit (nixpkgs) lib; };
       shadow = import ./shadow.nix { inherit (nixpkgs) lib; };
 
       # Helper for setting up the base files for managing users and
@@ -93,14 +94,6 @@
           fhsPaths = self.lib.setupFHS args;
         in
         toString (nixpkgs.lib.mapAttrsToList (name: env: "ln -s ${env}/${name} ${targetDir}/${name};") fhsPaths);
-
-      dockerConfig = {
-        # Turns { TZ = "UTC"; LANG = "C"; } into [ "TZ=UTC", "LANG=C" ]
-        env = envvars: nixpkgs.lib.mapAttrsToList (k: v: "${k}=${toString v}") envvars;
-
-        # Turns [ "/var/run/zentria" ] into { "/var/lib/zentria" = { }; }
-        volumes = paths: nixpkgs.lib.listToAttrs (map (p: { name = p; value = { }; }) paths);
-      };
 
       # Do not use
       internal' = {
