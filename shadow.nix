@@ -5,6 +5,7 @@ let
     "passwd" = "644";
     "group" = "644";
     "shadow" = "600";
+    "gshadow" = "600";
   };
 
   # Create a flat list of user/group mappings
@@ -61,6 +62,14 @@ let
     }:
     "${name}:x:${toString gid}:${lib.concatStringsSep "," members}";
 
+  # Creates a gshadow entry from the group
+  groupToGshadowEntry =
+    name:
+    { members ? [ ]
+    , ...
+    }:
+    "${name}:!::${lib.concatStringsSep "," members}";
+
   attrsToLines = f: data: lib.concatStringsSep "\n"
     ((lib.attrValues (lib.mapAttrs f data)) ++ [ "" ]);
 in
@@ -88,15 +97,14 @@ rec {
           members = (group.members or [ ]) ++ (collectedGroups.${name} or [ ]);
         };
       groups' = lib.mapAttrs addCollectedMembers groups;
-
+    in
+    {
       passwd = attrsToLines userToPasswdEntry users;
       shadow = attrsToLines userToShadowEntry users;
       group = attrsToLines groupToGroupEntry groups';
-    in
-    {
-      inherit passwd shadow group;
-      passAsFile = [ "passwd" "shadow" "group" ];
+      gshadow = attrsToLines groupToGshadowEntry groups';
 
+      passAsFile = [ "passwd" "shadow" "group" "gshadow" ];
       # `cat $passwdPath > $out/etc/passwd` etc.
     };
 
