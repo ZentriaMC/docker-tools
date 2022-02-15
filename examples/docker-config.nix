@@ -1,16 +1,19 @@
-# nix-instantiate --eval --strict ./examples/docker-config.nix
+# nix-build ./examples/docker-config.nix
 let
   flake = builtins.getFlake (toString ./..);
-  dockerConfig = flake.lib.dockerConfig;
-in
-{
-  Env = dockerConfig.env {
-    TZ = "UTC";
-    LANG = "C";
-  };
+  pkgs = import flake.inputs.nixpkgs { };
 
-  Volumes = dockerConfig.volumes [
-    "/data"
-    "/var/lib/zentria"
-  ];
-}
+  dockerConfig = flake.lib.dockerConfig;
+  config = {
+    Env = dockerConfig.env {
+      TZ = "UTC";
+      LANG = "C";
+    };
+
+    Volumes = dockerConfig.volumes [
+      "/data"
+      "/var/lib/zentria"
+    ];
+  };
+in
+pkgs.writeText "docker-config.json" (builtins.toJSON config)
