@@ -7,6 +7,8 @@
 
   outputs = { self, nixpkgs }: {
     lib = {
+      shadow = import ./shadow.nix { inherit (nixpkgs) lib; };
+
       # Helper for setting up the base files for managing users and
       # groups, only if such files don't exist already. It is suitable for
       # being used in extraCommands.
