@@ -14,16 +14,40 @@
       # being used in extraCommands.
       # This is based on dockerTools.shadowSetup, except it does not require
       # runAsRoot
-      shadowSetup = { runtimeShell ? "/bin/sh", targetDir ? "." }: ''
+      shadowSetup =
+        { runtimeShell ? "/bin/sh"
+        , writeText ? self.lib.internal'.pkgs'.writeText
+        , users ? self.lib.shadow.defaultUsers
+        , groups ? self.lib.shadow.defaultGroups
+        , targetDir ? "."
+        }:
+        let
+          script = self.lib.shadow.setupUsersScriptExtraCommands {
+            inherit writeText targetDir groups;
+
+            # Adjust root user shell
+            users =
+              if (users ? root) then
+                let
+                  users' = users // {
+                    root = users.root // {
+                      shell = runtimeShell;
+                    };
+                  };
+                in
+                users'
+              else users;
+          };
+        in
+        ''
+          ${script}
+          ${self.lib.pamSetup { inherit targetDir; }}
+        '';
+
+      # Sets up stub PAM files
+      pamSetup = { targetDir ? "." }: ''
         mkdir -p ${targetDir}/etc/pam.d
-        if [[ ! -f ${targetDir}/etc/passwd ]]; then
-          echo "root:x:0:0::/root:${runtimeShell}" > ${targetDir}/etc/passwd
-          echo "root:!x:::::::" > ${targetDir}/etc/shadow
-        fi
-        if [[ ! -f ${targetDir}/etc/group ]]; then
-          echo "root:x:0:" > ${targetDir}/etc/group
-          echo "root:x::" > ${targetDir}/etc/gshadow
-        fi
+
         if [[ ! -f ${targetDir}/etc/pam.d/other ]]; then
           cat > ${targetDir}/etc/pam.d/other <<EOF
         account sufficient pam_unix.so
@@ -32,14 +56,10 @@
         session required pam_unix.so
         EOF
         fi
+
         if [[ ! -f ${targetDir}/etc/login.defs ]]; then
           touch ${targetDir}/etc/login.defs
         fi
-
-        chmod 640 ${targetDir}/etc/gshadow
-        chmod 640 ${targetDir}/etc/shadow
-        chmod 644 ${targetDir}/etc/passwd
-        chmod 644 ${targetDir}/etc/group
       '';
 
       # Symlinks CA certs into place for HTTPS etc. via curl, java and other
@@ -80,6 +100,11 @@
 
         # Turns [ "/var/run/zentria" ] into { "/var/lib/zentria" = { }; }
         volumes = paths: nixpkgs.lib.listToAttrs (map (p: { name = p; value = { }; }) paths);
+      };
+
+      # Do not use
+      internal' = {
+        pkgs' = nixpkgs.legacyPackages.${builtins.currentSystem};
       };
     };
   };
