@@ -17,7 +17,7 @@
       # runAsRoot
       shadowSetup =
         { runtimeShell ? "/bin/sh"
-        , writeText ? self.lib.internal'.pkgs'.writeText
+        , writeText ? null
         , users ? self.lib.shadow.defaultUsers
         , groups ? self.lib.shadow.defaultGroups
         , targetDir ? "."
@@ -96,11 +96,6 @@
           };
         in
         toString ([ "mkdir -p \"${targetDir}\";" ] ++ (nixpkgs.lib.mapAttrsToList (name: env: "ln -s ${env}/${name} ${targetDir}/${name};") fhsPaths));
-
-      # Do not use
-      internal' = {
-        pkgs' = nixpkgs.legacyPackages.${builtins.currentSystem};
-      };
     };
   };
 }
