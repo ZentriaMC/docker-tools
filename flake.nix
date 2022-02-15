@@ -89,11 +89,13 @@
           paths;
 
       # Creates a FHS environment symlink script.
-      setupFHSScript = { pkgs, paths, targetDir ? "." }@args:
+      setupFHSScript = { targetDir ? ".", ... }@args:
         let
-          fhsPaths = self.lib.setupFHS args;
+          fhsPaths = self.lib.setupFHS {
+            inherit (args) pkgs paths;
+          };
         in
-        toString (nixpkgs.lib.mapAttrsToList (name: env: "ln -s ${env}/${name} ${targetDir}/${name};") fhsPaths);
+        toString ([ "mkdir -p \"${targetDir}\";" ] ++ (nixpkgs.lib.mapAttrsToList (name: env: "ln -s ${env}/${name} ${targetDir}/${name};") fhsPaths));
 
       # Do not use
       internal' = {
