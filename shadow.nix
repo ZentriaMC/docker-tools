@@ -121,7 +121,9 @@ rec {
   # Setup users inside buildImage extraCommands script.
   setupUsersScriptExtraCommands = { writeText, targetDir ? ".", ... }@args:
     let
-      contents = setupUsers args;
+      contents = setupUsers {
+        inherit (args) users groups;
+      };
       contents' = lib.listToAttrs (map (k: { name = k; value = writeText k contents.${k}; }) contents.passAsFile);
     in
     toString ([ "mkdir -p \"${targetDir}/etc\";" ] ++ (lib.mapAttrsToList
