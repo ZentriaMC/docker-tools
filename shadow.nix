@@ -52,7 +52,7 @@ let
     { password ? "!"
     , ...
     }:
-    "${name}:!:1::::::";
+    "${name}:${password}:1::::::";
 
   # Creates a group entry from the group
   groupToGroupEntry =
