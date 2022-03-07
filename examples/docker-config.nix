@@ -3,7 +3,7 @@ let
   flake = builtins.getFlake (toString ./..);
   pkgs = import flake.inputs.nixpkgs { };
 
-  dockerConfig = flake.lib.dockerConfig;
+  dockerConfig = (flake.mkLib { inherit pkgs; }).dockerConfig;
   config = {
     Env = dockerConfig.env {
       TZ = "UTC";

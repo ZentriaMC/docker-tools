@@ -1,9 +1,10 @@
-# nix-build ./examples/build-fhs.nix
+# nix-build ./examples/shadow-setup.nix
 let
   flake = builtins.getFlake (toString ./..);
   pkgs = import flake.inputs.nixpkgs { };
+  lib = flake.mkLib { inherit pkgs; };
 
-  fhsSetupScript = flake.lib.setupFHSScript {
+  fhsSetupScript = lib.setupFHSScript {
     inherit pkgs;
     paths = {
       "bin" = with pkgs; [
@@ -18,7 +19,7 @@ let
     targetDir = "$out";
   };
 
-  shadowSetupScript = flake.lib.shadowSetup {
+  shadowSetupScript = lib.shadowSetup {
     inherit (pkgs) writeText;
     targetDir = "$out";
   };

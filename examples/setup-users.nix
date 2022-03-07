@@ -1,9 +1,9 @@
-# nix-build ./examples/setup-users
+# nix-build ./examples/setup-users.nix
 let
   flake = builtins.getFlake (toString ./..);
   pkgs = import flake.inputs.nixpkgs { };
 
-  shadow = flake.lib.shadow;
+  shadow = (flake.mkLib { inherit pkgs; }).shadow;
 
   users = shadow.defaultUsers // {
     mark.uid = 1000;

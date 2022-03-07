@@ -3,7 +3,7 @@ let
   flake = builtins.getFlake (toString ./..);
   pkgs = import flake.inputs.nixpkgs { };
 
-  fhsSetupScript = flake.lib.setupFHSScript {
+  fhsSetupScript = (flake.mkLib { inherit pkgs; }).setupFHSScript {
     inherit pkgs;
     paths = {
       "bin" = with pkgs; [
