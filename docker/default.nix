@@ -1048,6 +1048,15 @@ rec {
         ]
       );
 
+      # A symlink on Darwin takes its mode from the umask, one on Linux is
+      # always 0777. Recreate them, so the layer does not depend on where it
+      # was built.
+      relinkSymlinks = prune: ''
+        (umask 0; find . ${prune} -type l -print0 | while IFS= read -r -d "" l; do
+          t=$(readlink "$l"); rm "$l"; ln -s "$t" "$l"
+        done)
+      '';
+
       # We store the customisation layer as a tarball, to make sure that
       # things like permissions set on 'extraCommands' are not overridden
       # by Nix. Then we precompute the sha256 for performance.
@@ -1077,6 +1086,7 @@ rec {
                   if [ -e "$NIX_ATTRS_SH_FILE" ]; then . "$NIX_ATTRS_SH_FILE"; fi
                   source $stdenv/setup
                   eval "$fakeRootCommands"
+                  ${relinkSymlinks ''\( -path ./dev -o -path ./proc -o -path ./sys -o -path .${builtins.storeDir} -o -path ".$NIX_BUILD_TOP" \) -prune -o''}
                   tar \
                     --sort name \
                     --exclude=./dev \
@@ -1096,6 +1106,7 @@ rec {
                   source $stdenv/setup
                   cd old_out
                   eval "$fakeRootCommands"
+                  ${relinkSymlinks ""}
                   tar \
                     --sort name \
                     --numeric-owner --mtime "@$SOURCE_DATE_EPOCH" \
