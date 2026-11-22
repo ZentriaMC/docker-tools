@@ -19,7 +19,6 @@
   makeWrapper,
   moreutils,
   nix,
-  nixosTests,
   pigz,
   rsync,
   runCommand,
@@ -115,26 +114,6 @@ let
 
 in
 rec {
-  examples = callPackage ./examples.nix {
-    inherit
-      buildImage
-      buildLayeredImage
-      pullImage
-      shadowSetup
-      buildImageWithNixDb
-      streamNixShellImage
-      ;
-  };
-
-  tests = {
-    inherit (nixosTests)
-      docker-tools
-      docker-tools-overlay
-      # requires remote builder
-      # docker-tools-cross
-      ;
-  };
-
   pullImage =
     let
       fixName = name: builtins.replaceStrings [ "/" ":" ] [ "-" "-" ] name;
