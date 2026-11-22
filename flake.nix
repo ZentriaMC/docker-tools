@@ -96,6 +96,45 @@
           };
         in
         toString ([ "mkdir -p \"${targetDir}\";" ] ++ (nixpkgs.lib.mapAttrsToList (name: env: "ln -s ${env}/${name} ${targetDir}/${name};") fhsPaths));
+
+      # nixpkgs' dockerTools, with fixes so that an image does not depend on
+      # the system that builds it. pkgs is instance of imported nixpkgs.
+      dockerTools = pkgs: pkgs.callPackage ./docker {
+        writePython3 = pkgs.buildPackages.writers.writePython3;
+      };
     };
+
+    # Builds a Linux image and fails if any layer has a symlink that is not
+    # 0777. On Darwin this checks the fixes, on Linux it always passes.
+    checks = nixpkgs.lib.genAttrs [ "aarch64-darwin" "aarch64-linux" "x86_64-linux" ] (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+        linux = nixpkgs.legacyPackages.${{ aarch64-darwin = "aarch64-linux"; }.${system} or system};
+        image = (self.lib.dockerTools pkgs).buildLayeredImage {
+          name = "symlink-modes";
+          tag = "latest";
+          architecture = linux.stdenv.hostPlatform.go.GOARCH;
+          compressor = "none";
+          contents = [ linux.hello ];
+          extraCommands = "ln -s bin/hello hello";
+        };
+      in
+      {
+        symlink-modes = pkgs.runCommand "symlink-modes" { } ''
+          mkdir image
+          tar -xf ${image} -C image
+          for layer in image/*/layer.tar; do
+            tar -tvf "$layer"
+          done > listing
+          if ! grep -q '^l' listing; then
+            echo "no symlinks in the image"
+            exit 1
+          fi
+          if grep '^l' listing | grep -v '^lrwxrwxrwx'; then
+            exit 1
+          fi
+          touch $out
+        '';
+      });
   };
 }
